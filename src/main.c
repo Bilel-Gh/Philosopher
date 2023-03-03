@@ -6,7 +6,7 @@
 /*   By: bghandri <bghandri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/03 08:55:51 by bghandri          #+#    #+#             */
-/*   Updated: 2023/03/03 10:05:53 by bghandri         ###   ########.fr       */
+/*   Updated: 2023/03/03 13:49:49 by bghandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,10 @@ void ft_init(t_infos *infos, int ac, char **av)
 
 int	main(int ac, char **av)
 {
+	struct timeval tv;
+
+    gettimeofday(&tv, NULL);
+
 	t_infos	*infos;
 	if (ac != 5 && ac != 6)
 		return (0);
@@ -36,6 +40,10 @@ int	main(int ac, char **av)
 	if (!infos)
 		return (0);
 	ft_init(infos, ac, av);
+
+	printf("Seconds since 1/1/1970: %lu\n",tv.tv_sec);
+    printf("Microseconds: %ld\n\n\n",tv.tv_usec);
+
 	printf("Hello World!\nac = %d\n", ac);
 	printf("number_of_philosophers = %d\n", infos->number_of_philosophers);
 	printf("number_of_forks = %d\n", infos->number_of_forks);

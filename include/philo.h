@@ -6,7 +6,7 @@
 /*   By: bghandri <bghandri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/03 08:56:19 by bghandri          #+#    #+#             */
-/*   Updated: 2023/03/03 10:13:55 by bghandri         ###   ########.fr       */
+/*   Updated: 2023/03/03 13:32:25 by bghandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 # include <stdio.h>
 # include <stddef.h>
 # include <stdlib.h>
+#include <sys/time.h>
 
 typedef struct s_infos
 {
