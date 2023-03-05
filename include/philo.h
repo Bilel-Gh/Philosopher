@@ -17,17 +17,47 @@
 # include <stddef.h>
 # include <stdlib.h>
 #include <sys/time.h>
+#include <semaphore.h>
+# include <pthread.h>
+#include <unistd.h>
+# include <time.h>
 
 typedef struct s_infos
 {
-	int				number_of_philosophers;
-	int				number_of_forks;
-	int				time_to_die;
-	int				time_to_eat;
-	int				time_to_sleep;
-	int				number_of_times_each_philosopher_must_eat;
+    unsigned int				number_of_philosophers;
+	unsigned int				number_of_forks;
+    unsigned int				time_to_die;
+    unsigned int				time_to_eat;
+    unsigned int				time_to_sleep;
+    sem_t                       *forks;
+    pthread_mutex_t             forks_mutex;
+    unsigned int				number_of_times_each_philosopher_must_eat;
+    time_t           start_time;
 	struct s_philo	*next;
 }					t_infos;
+
+typedef struct s_philo
+{
+    unsigned int				id;
+    unsigned int				number_of_times_each_philosopher_must_eat;
+    unsigned int				number_of_times_eaten;
+    time_t           last_meal;
+    pthread_t        thread;
+    //pthread_mutex_t  *left_fork;
+    pthread_mutex_t  *fork;
+    t_infos         *infos;
+    struct s_philo	*next;
+}					t_philo;
+
+typedef enum e_status
+{
+    DIED = 0,
+    EATING = 1,
+    SLEEPING = 2,
+    THINKING = 3,
+    GOT_FORK_1 = 4,
+    GOT_FORK_2 = 5
+}	t_status;
 
 int	ft_parse_args(int ac, char **av);
 void	ft_print_error(char *str, int *err);

@@ -22,7 +22,7 @@ CHECK_OBJS = ${addprefix ${CHECKER_DIR}, ${CHECKER:.c=.o}}
 
 # /* ~~~~~~~ COMPILING INFO ~~~~~~~ */
 CC = cc
-CFLAGS = -Wall -Werror -Wextra -g
+CFLAGS = -Wall -Werror -Wextra -pthread -g
 IFLAGS:= -I ./include
 # LFLAGS:= -L $(LIBFT_DIR) -lft
 # LPRINTF_FLAGS:= -L $(FT_PRINTF_DIR) -lftprintf

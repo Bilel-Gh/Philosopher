@@ -15,9 +15,7 @@
 int	check_overflow_bis(long long to_check)
 {
 	if (to_check < -2147483648 || to_check > 2147483647)
-	{
 		return (1);
-	}
 	else
 		return (0);
 }
@@ -65,7 +63,6 @@ int	ft_isnum(char *num)
 
 int	ft_check_args(int *err_code, char **my_args)
 {
-	long long	to_check;
 	int			overflow_err;
 	int			i;
 
@@ -74,7 +71,7 @@ int	ft_check_args(int *err_code, char **my_args)
 	i = 1;
 	while (my_args[i])
 	{
-		to_check = ft_atoi_overflow(my_args[i], &overflow_err);
+		ft_atoi_overflow(my_args[i], &overflow_err);
 		if (overflow_err == 1)
 		{
 			ft_print_error("Overflow", err_code);
@@ -95,7 +92,11 @@ int	ft_parse_args(int ac, char **av)
 {
 	(void)ac;
 	int		err_code;
-
+    if (atoi(av[1]) < 2)
+    {
+        ft_print_error("number of philosophers must be bigger than 1", &err_code);
+        return (err_code);
+    }
 	err_code = ft_check_args(&err_code, av);
 	return (err_code);
 }
