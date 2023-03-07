@@ -12,12 +12,19 @@
 
 #include "../include/philo.h"
 
+void ft_set_fork(t_philo *philo, pthread_mutex_t **fork_right, pthread_mutex_t **fork_left);
+
 time_t	get_time_in_ms(void)
 {
     struct timeval		tv;
 
     gettimeofday(&tv, NULL);
     return ((tv.tv_sec * 1000) + (tv.tv_usec / 1000));
+}
+
+time_t get_actual_time(t_infos *infos)
+{
+    return (get_time_in_ms() - infos->start_time);
 }
 
 void ft_init(t_infos *infos, int ac, char **av)
@@ -31,6 +38,8 @@ void ft_init(t_infos *infos, int ac, char **av)
     infos->start_time = get_time_in_ms();
 	if (ac == 6)
 		infos->number_of_times_each_philosopher_must_eat = atoi(av[5]);
+    else
+        infos->number_of_times_each_philosopher_must_eat = -1;
 }
 
 void prints_test(int ac, t_infos *infos) {
@@ -39,156 +48,175 @@ void prints_test(int ac, t_infos *infos) {
     printf("Hello World!\nac = %d\n", ac);
 }
 
-//int	ft_take_forks(t_philo *philo)
-//{
-//    //printf("Salut, je suis le philo %d : je vais prendre les fourchettes\n", philo->id);
-//    while (philo->nbr_forks < 2)
-//    {
-//        printf("Salut, je suis le philo %d : j'ai %u fork devant moi\n", philo->id, philo->nbr_forks);
-//        usleep(1000);
-//    }
-//    if (pthread_mutex_lock(philo->fork) != 0)
-//    {
-//        printf("Salut, je suis le philo %d : je n'ai pas pu prendre ma propre fourchette\n", philo->id);
-//        return (0);
-//    }
-//    //printf("[Salut, je suis le philo %d : j'ai pris ma propre fourchette]\n", philo->id);
-//    printf("%lu %d has taken a fork 1\n", get_time_in_ms(), philo->id);
-//    philo->nbr_forks--;
-//    philo->philo_fork = 0;
-//    if (pthread_mutex_lock(philo->next->fork) != 0)
-//    {
-//        printf("Salut, je suis le philo %d : je n'ai pas pu prendre la fouchette du philo %d\nje depose ma fourchette\n", philo->id, philo->next->id);
-//        pthread_mutex_unlock(philo->fork);
-//        return (0);
-//    }
-//    //printf("Salut, je suis le philo %d : j'ai pris la fourchette de droite\n", philo->id);
-//    printf("%lu %d has taken a fork 2\n", get_time_in_ms(), philo->id);
-//    philo->nbr_forks = 0;
-//    philo->infos->number_of_forks--;
-//    return (1);
-//}
-
 time_t get_time_since_start(t_philo *philo)
 {
-    printf("             start: %lu\n", philo->infos->start_time);
-    printf("             time in ms: %lu\n", get_time_in_ms());
+    printf("             get_time_since_start: %lu\n", get_time_in_ms() - philo->infos->start_time);
     return (get_time_in_ms() - philo->infos->start_time);
 }
 
 time_t get_time_since_last_meal(t_philo *philo)
 {
-    printf("             last meal: %lu\n", philo->last_meal);
-    printf("             time in ms: %lu\n", get_time_in_ms());
+    printf("             get_time_since_last_meal: %lu\n", get_time_in_ms() - philo->last_meal);
     return (get_time_in_ms() - philo->last_meal);
 }
 
-int    ft_time_to_die(t_philo *philo)
+void check_death_condition(t_philo *philo)
 {
-    if (philo->last_meal == 0)
+    time_t curr_time = get_actual_time(philo->infos);
+    time_t time_since_last_meal = curr_time - philo->last_meal;
+
+    // Vérifie si le temps écoulé depuis le dernier repas du philosophe dépasse le temps de mort autorisé
+    //printf("%lu %d last meal was %lu ms ago \n",get_actual_time(philo->infos), philo->id, time_since_last_meal);
+    if (time_since_last_meal > philo->infos->time_to_die)
     {
-        if (get_time_since_start(philo) > philo->infos->time_to_die)
-        {
-            printf("             %lu %d died. wait is %lu ms\n", get_time_in_ms(), philo->id, get_time_since_start(philo));
-            return (0);
-        }
-    }
-    else if (philo->last_meal > 0 && get_time_since_last_meal(philo) > philo->infos->time_to_die)
-    {
-        printf("%lu %d died. wait is %lu ms\n", get_time_in_ms(), philo->id, get_time_since_last_meal(philo));
-        return (0);
-    }
-    return (1);
-}
-
-int	ft_take_forks(t_philo *philo)
-{
-    // Récupérer les deux fourchettes en ordre croissant
-    int first_fork = philo->id - 1;
-    int second_fork = philo->next->id - 1;
-    if (first_fork > second_fork) {
-        first_fork = philo->next->id - 1;
-        second_fork = philo->id - 1;
-    }
-
-    while (1)
-    {
-        if (philo->infos->number_of_times_each_philosopher_must_eat)
-        {
-            if (ft_time_to_die(philo) == 0)
-                return (0);
-            if (philo->infos->number_of_times_each_philosopher_must_eat == philo->number_of_times_eaten)
-            {
-                printf("             %lu %d has eaten %d times ", get_time_in_ms(), philo->id, philo->number_of_times_eaten);
-                printf("%lu %d must eat %d times\n", get_time_in_ms(), philo->id, philo->infos->number_of_times_each_philosopher_must_eat);
-                printf("%lu %d is full\n", get_time_in_ms(), philo->id);
-                return (1);
-            }
-        }
-        else
-        {
-            if (get_time_since_last_meal(philo) > philo->infos->time_to_die)
-            {
-                // print le temps ecoulé depuis le dernier repas
-                printf("             %lu %d last meal was %lu ms ago\n", get_time_in_ms(), philo->id, get_time_since_last_meal(philo));
-                printf("%lu %d died. wait is %lu ms\n", get_time_in_ms(), philo->id, get_time_since_last_meal(philo));
-                return (0);
-            }
-        }
-
-        // print le nombre de fois qu'il a mangé
-        printf("             [%lu %d has eaten %d times]\n", get_time_in_ms(), philo->id, philo->number_of_times_eaten);
-        //print le nombre de fois qu'il doit manger
-        printf("             [%lu %d must eat %d times]\n", get_time_in_ms(), philo->id, philo->infos->number_of_times_each_philosopher_must_eat);
-
-        // Bloquer l'accès aux fourchettes
         pthread_mutex_lock(&philo->infos->forks_mutex);
-
-        // Prendre la première fourchette
-        sem_wait(&philo->infos->forks[first_fork]);
-        printf("%lu %d has taken a fork %d\n", get_time_in_ms(), philo->id, first_fork + 1);
-
-        // Bloquer l'accès à la deuxième fourchette
-        pthread_mutex_lock(philo->next->fork);
-
-        // Prendre la deuxième fourchette
-        sem_wait(&philo->infos->forks[second_fork]);
-        printf("%lu %d has taken a fork %d\n", get_time_in_ms(), philo->id, second_fork + 1);
-        printf("%lu %d is eating\n", get_time_in_ms(), philo->id);
-        usleep(philo->infos->time_to_eat * 1000);
-        philo->last_meal = get_time_in_ms();
-        philo->number_of_times_eaten++;
-        // Libérer les fourchettes
-        sem_post(&philo->infos->forks[first_fork]);
-        sem_post(&philo->infos->forks[second_fork]);
-
-        // Débloquer l'accès à la deuxième fourchette
-        pthread_mutex_unlock(philo->next->fork);
+        printf("       %lu %d : %lums too long since last meal\n", curr_time, philo->id, time_since_last_meal - philo->infos->time_to_die);
+        printf("%lu %d has died\n", curr_time, philo->id);
         pthread_mutex_unlock(&philo->infos->forks_mutex);
-
-        printf("%lu %d is sleeping\n", get_time_in_ms(), philo->id);
-        usleep(philo->infos->time_to_sleep * 1000);
-
+        pthread_mutex_unlock(philo->fork);
+        pthread_mutex_unlock(philo->next->fork);
+        exit (0);
     }
+}
+
+//int ft_take_forks(t_philo *philo) // TODO: check if this is needed
+//{
+//    pthread_mutex_t *fork_right = philo->fork;
+//    pthread_mutex_t *fork_left = philo->next->fork;
+//
+//    //printf("             %lu %d eat %d times\n", get_actual_time(philo->infos), philo->id, philo->number_of_times_eaten);
+//    // Si l'id du philosophe est impair, il doit attendre avant de manger
+//    if (philo->id % 2 == 0 && philo->number_of_times_eaten == 0)
+//    {
+//        //printf("             [%lu %d is waiting]\n", get_actual_time(philo->infos), philo->id);
+//        usleep(philo->infos->time_to_eat * 1000);
+//        //printf("             [%lu %d is done waiting %u ms]\n", get_actual_time(philo->infos), philo->id, philo->infos->time_to_eat * 1000);
+//    }
+//    pthread_mutex_lock(fork_right);
+//    printf("%lu %d has taken a fork\n", get_actual_time(philo->infos), philo->id);
+//    check_death_condition(philo);
+//    pthread_mutex_lock(fork_left);
+//    printf("%lu %d has taken a fork\n", get_actual_time(philo->infos), philo->id);
+//    check_death_condition(philo);
+//
+//    // philosophe mange
+//    philo->last_meal = get_actual_time(philo->infos);
+////    if (philo->last_meal + philo->infos->time_to_eat > philo->infos->time_to_die)
+////    {
+////        printf("       +last meal was %lu ms ago \n", philo->last_meal);
+////        printf("       +time to die is %u ms \n", philo->infos->time_to_die);
+////        printf("%lu %d has died\n", get_actual_time(philo->infos), philo->id);
+////        exit (0);
+////    }
+//    check_death_condition(philo);
+//    printf("%lu %d is eating\n", philo->last_meal, philo->id);
+//    usleep(philo->infos->time_to_eat * 1000);
+//    //philo->last_meal = get_actual_time(philo->infos);
+//    //check_death_condition(philo);
+//    //printf("       [%lu %d has finished eating.]\n", get_actual_time(philo->infos), philo->id);
+//    philo->number_of_times_eaten++;
+//
+//    pthread_mutex_unlock(fork_left);
+//    //printf("             [%lu %d has released a fork left]\n", get_actual_time(philo->infos), philo->id);
+//    pthread_mutex_unlock(fork_right);
+//    //printf("             [%lu %d has released a fork right]\n", get_actual_time(philo->infos), philo->id);
+//    if (philo->number_of_times_each_philosopher_must_eat > 0 && philo->number_of_times_eaten == philo->number_of_times_each_philosopher_must_eat)
+//    {
+//        //printf("             +[%lu %d has finished eating.]\n", get_actual_time(philo->infos), philo->id);
+//        return (1);
+//    }
+//    // philosophe dort
+//    printf("%lu %d is sleeping\n", get_actual_time(philo->infos), philo->id);
+//    usleep(philo->infos->time_to_sleep * 1000);
+//
+//    // philosophe pense
+//    printf("%lu %d is thinking\n", get_actual_time(philo->infos), philo->id);
+//
+//    return (1);
+//}
+
+void ft_set_fork(t_philo *philo, pthread_mutex_t **fork_right, pthread_mutex_t **fork_left) {
+    if (philo->id % 2 == 0)
+    {
+        (*fork_right) = philo->fork;
+        (*fork_left) = philo->next->fork;
+    }
+    else
+    {
+        (*fork_right) = philo->next->fork;
+        (*fork_left) = philo->fork;
+    }
+}
+
+int ft_take_forks(t_philo *philo)
+{
+    pthread_mutex_t *fork_right;
+    pthread_mutex_t *fork_left;
+    ft_set_fork(philo, &fork_right, &fork_left);
+
+    time_t curr_time = get_actual_time(philo->infos);
+
+    // Vérifier si le philosophe est toujours en vie avant de prendre les fourchettes
+    check_death_condition(philo);
+
+    // Si l'id du philosophe est impair, il doit attendre avant de manger
+    if (philo->id % 2 == 0 && philo->number_of_times_eaten == 0)
+    {
+        usleep(philo->infos->time_to_eat * 1000);
+        curr_time = get_actual_time(philo->infos);
+    }
+
+    // Prendre les fourchettes
+    pthread_mutex_lock(fork_right);
+    printf("%lu %d has taken a fork\n", curr_time, philo->id);
+    pthread_mutex_lock(fork_left);
+    printf("%lu %d has taken a fork\n", curr_time, philo->id);
+
+    // Vérifier si le philosophe est toujours en vie avant de manger
+    check_death_condition(philo);
+
+    // Philosophe mange
+    philo->last_meal = get_actual_time(philo->infos);
+    printf("%lu %d is eating\n", philo->last_meal, philo->id);
+    usleep(philo->infos->time_to_eat * 1000);
+    philo->number_of_times_eaten++;
+    pthread_mutex_unlock(fork_left);
+    pthread_mutex_unlock(fork_right);
+    curr_time = get_actual_time(philo->infos);
+
+    // Libérer les fourchettes
+
+    // Vérifier si le philosophe a mangé le nombre de fois requis
+    if (philo->number_of_times_each_philosopher_must_eat > 0 && philo->number_of_times_eaten == philo->number_of_times_each_philosopher_must_eat)
+    {
+        return (1);
+    }
+
+    // Philosophe dort
+    printf("%lu %d is sleeping\n", curr_time, philo->id);
+    usleep(philo->infos->time_to_sleep * 1000);
+    curr_time = get_actual_time(philo->infos);
+    // Philosophe pense
+    printf("%lu %d is thinking\n", curr_time, philo->id);
 
     return (1);
 }
+
 
 void *start_routine(void *arg)
 {
     t_philo *philo = (t_philo*) arg;
-    if (ft_take_forks(philo))
+    // si l'id du philosophe est impair, il doit attendre avant de manger
+    if (philo->number_of_times_each_philosopher_must_eat == -1)
     {
-        // print qu'il a finis de manger n fois
-        printf("             %lu %d has finished eating %d times\n", get_time_in_ms(), philo->id, philo->number_of_times_eaten);
-//        philo->philo_fork = 1;
-//        philo->next->philo_fork = 1;
-//        philo->nbr_forks = philo->philo_fork + philo->next->philo_fork;
-        pthread_mutex_unlock(philo->fork);
-        pthread_mutex_unlock(philo->next->fork);
+        while (1)
+            ft_take_forks(philo);
     }
     else
-        printf("[%lu %d has died]\n", get_time_in_ms(), philo->id);
+    {
+        while (philo->number_of_times_eaten < philo->number_of_times_each_philosopher_must_eat)
+            ft_take_forks(philo);
+    }
     return (NULL);
 }
 
@@ -216,6 +244,7 @@ t_philo *ft_set_table(t_infos *infos)
         if (!philo[i].fork)
             return (NULL);
         pthread_mutex_init(philo[i].fork, NULL);
+
         i++;
     }
     return (philo);
@@ -226,6 +255,7 @@ void ft_start_simulation(t_philo *table)
     unsigned int i;
 
     i = 0;
+    table->infos->start_time = get_time_in_ms();
     while (i < table->infos->number_of_philosophers)
     {
         pthread_create(&table[i].thread, NULL, start_routine, &table[i]);

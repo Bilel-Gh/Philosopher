@@ -17,7 +17,6 @@
 # include <stddef.h>
 # include <stdlib.h>
 #include <sys/time.h>
-#include <semaphore.h>
 # include <pthread.h>
 #include <unistd.h>
 # include <time.h>
@@ -29,9 +28,9 @@ typedef struct s_infos
     unsigned int				time_to_die;
     unsigned int				time_to_eat;
     unsigned int				time_to_sleep;
-    sem_t                       *forks;
     pthread_mutex_t             forks_mutex;
-    unsigned int				number_of_times_each_philosopher_must_eat;
+    pthread_mutex_t             routine_mutex;
+    int				            number_of_times_each_philosopher_must_eat;
     time_t           start_time;
 	struct s_philo	*next;
 }					t_infos;
@@ -39,11 +38,10 @@ typedef struct s_infos
 typedef struct s_philo
 {
     unsigned int				id;
-    unsigned int				number_of_times_each_philosopher_must_eat;
-    unsigned int				number_of_times_eaten;
+    int				number_of_times_each_philosopher_must_eat;
+    int				number_of_times_eaten;
     time_t           last_meal;
     pthread_t        thread;
-    //pthread_mutex_t  *left_fork;
     pthread_mutex_t  *fork;
     t_infos         *infos;
     struct s_philo	*next;
