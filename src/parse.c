@@ -92,9 +92,9 @@ int	ft_parse_args(int ac, char **av)
 {
 	(void)ac;
 	int		err_code;
-    if (atoi(av[1]) < 2)
+    if (atoi(av[1]) < 1)
     {
-        ft_print_error("number of philosophers must be bigger than 1", &err_code);
+        ft_print_error("number of philosophers must be bigger than 0", &err_code);
         return (err_code);
     }
 	err_code = ft_check_args(&err_code, av);

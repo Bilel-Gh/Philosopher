@@ -14,6 +14,8 @@
 
 void ft_set_fork(t_philo *philo, pthread_mutex_t **fork_right, pthread_mutex_t **fork_left);
 
+void ft_eat(const t_philo *philo);
+
 time_t	get_time_in_ms(void)
 {
     struct timeval		tv;
@@ -67,14 +69,19 @@ void check_death_condition(t_philo *philo)
 
     // Vérifie si le temps écoulé depuis le dernier repas du philosophe dépasse le temps de mort autorisé
     //printf("%lu %d last meal was %lu ms ago \n",get_actual_time(philo->infos), philo->id, time_since_last_meal);
+    if (philo->infos->number_of_philosophers == 1)
+    {
+        pthread_mutex_lock(&philo->infos->forks_mutex);
+        printf("%lu %d has died\n", curr_time, philo->id);
+        pthread_mutex_unlock(&philo->infos->forks_mutex);
+        exit (0);
+    }
     if (time_since_last_meal > philo->infos->time_to_die)
     {
         pthread_mutex_lock(&philo->infos->forks_mutex);
         printf("       %lu %d : %lums too long since last meal\n", curr_time, philo->id, time_since_last_meal - philo->infos->time_to_die);
         printf("%lu %d has died\n", curr_time, philo->id);
         pthread_mutex_unlock(&philo->infos->forks_mutex);
-        pthread_mutex_unlock(philo->fork);
-        pthread_mutex_unlock(philo->next->fork);
         exit (0);
     }
 }
@@ -148,6 +155,78 @@ void ft_set_fork(t_philo *philo, pthread_mutex_t **fork_right, pthread_mutex_t *
     }
 }
 
+void ft_eat(const t_philo *philo)
+{
+    time_t start_time = get_actual_time(philo->infos);
+
+    while (1)
+    {
+        // Vérifier si le philosophe est mort
+        if (get_actual_time(philo->infos) - philo->last_meal > philo->infos->time_to_die)
+        {
+            time_t curr_time = get_actual_time(philo->infos);
+            printf("%lu %d died\n", curr_time, philo->id);
+            exit(0);
+        }
+
+        // Vérifier si le temps de manger est écoulé
+        if (get_actual_time(philo->infos) - start_time >= philo->infos->time_to_eat)
+        {
+            break;
+        }
+
+        usleep(100);
+    }
+}
+
+void ft_sleep(const t_philo *philo)
+{
+    time_t start_time = get_actual_time(philo->infos);
+
+    while (1)
+    {
+        // Vérifier si le philosophe est mort
+        if (get_actual_time(philo->infos) - philo->last_meal > philo->infos->time_to_die)
+        {
+            time_t curr_time = get_actual_time(philo->infos);
+            printf("%lu %d died\n", curr_time, philo->id);
+            exit(0);
+        }
+
+        // Vérifier si le temps de dormir est écoulé
+        if (get_actual_time(philo->infos) - start_time >= philo->infos->time_to_sleep)
+        {
+            break;
+        }
+
+        usleep(100);
+    }
+}
+
+void ft_think(const t_philo *philo)
+{
+    time_t start_time = get_actual_time(philo->infos);
+
+    while (1)
+    {
+        // Vérifier si le philosophe est mort
+        if (get_actual_time(philo->infos) - philo->last_meal > philo->infos->time_to_die)
+        {
+            time_t curr_time = get_actual_time(philo->infos);
+            printf("%lu %d died\n", curr_time, philo->id);
+            exit(0);
+        }
+
+        // Vérifier si le temps de dormir est écoulé
+        if (get_actual_time(philo->infos) - start_time >= philo->infos->time_to_sleep)
+        {
+            break;
+        }
+
+        usleep(100);
+    }
+}
+
 int ft_take_forks(t_philo *philo)
 {
     pthread_mutex_t *fork_right;
@@ -162,15 +241,14 @@ int ft_take_forks(t_philo *philo)
     // Si l'id du philosophe est impair, il doit attendre avant de manger
     if (philo->id % 2 == 0 && philo->number_of_times_eaten == 0)
     {
-        usleep(philo->infos->time_to_eat * 1000);
+        ft_think(philo);
         curr_time = get_actual_time(philo->infos);
     }
-
     // Prendre les fourchettes
     pthread_mutex_lock(fork_right);
-    printf("%lu %d has taken a fork\n", curr_time, philo->id);
+    printf("%lu %d has taken a fork\n", get_actual_time(philo->infos), philo->id);
     pthread_mutex_lock(fork_left);
-    printf("%lu %d has taken a fork\n", curr_time, philo->id);
+    printf("%lu %d has taken a fork\n", get_actual_time(philo->infos), philo->id);
 
     // Vérifier si le philosophe est toujours en vie avant de manger
     check_death_condition(philo);
@@ -178,7 +256,7 @@ int ft_take_forks(t_philo *philo)
     // Philosophe mange
     philo->last_meal = get_actual_time(philo->infos);
     printf("%lu %d is eating\n", philo->last_meal, philo->id);
-    usleep(philo->infos->time_to_eat * 1000);
+    ft_eat(philo);
     philo->number_of_times_eaten++;
     pthread_mutex_unlock(fork_left);
     pthread_mutex_unlock(fork_right);
@@ -194,7 +272,7 @@ int ft_take_forks(t_philo *philo)
 
     // Philosophe dort
     printf("%lu %d is sleeping\n", curr_time, philo->id);
-    usleep(philo->infos->time_to_sleep * 1000);
+    ft_sleep(philo);
     curr_time = get_actual_time(philo->infos);
     // Philosophe pense
     printf("%lu %d is thinking\n", curr_time, philo->id);
