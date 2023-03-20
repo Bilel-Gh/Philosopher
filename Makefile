@@ -3,6 +3,8 @@ SRCS_DIR = ./src/
 SRCS =	main.c \
 		parse.c \
 		utils.c \
+		time.c \
+		actions.c \
 
 OBJS = ${addprefix ${SRCS_DIR}, ${SRCS:.c=.o}}
 
@@ -40,7 +42,7 @@ CYAN:="\033[1;36m"
 WHITE:="\033[1;37m"
 EOC:="\033[0;0m"
 
-all:	${NAME} ${CHECK}
+all:	${NAME}
 
 $(NAME): $(OBJS)
 	# @cd $(LIBFT_DIR) && $(MAKE)
