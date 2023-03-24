@@ -6,7 +6,7 @@
 /*   By: bghandri <bghandri@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2023/03/03 08:59:00 by bghandri          #+#    #+#             */
-/*   Updated: 2023/03/19 23:39:56 by bghandri         ###   ########.fr       */
+/*   Updated: 2023/03/23 20:31:09 by bghandri         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,30 +64,20 @@ int	ft_isnum(char *num)
 
 int	ft_check_args(int *err_code, char **my_args)
 {
-	int	overflow_err;
 	int	i;
+	int	overflow_err;
 
-	*err_code = 1;
-	overflow_err = 0;
 	i = 1;
+	*err_code = 1;
 	while (my_args[i])
 	{
-		ft_atoi_overflow(my_args[i], &overflow_err);
-        if (my_args[i][0] == '-' && my_args[i][1] != '\0')
-        {
-            ft_print_error("all args must be positive", err_code);
-            return (*err_code);
-        }
-		if (overflow_err == 1)
-		{
-			ft_print_error("Overflow", err_code);
-			return (*err_code);
-		}
 		if (!ft_isnum(my_args[i]))
-		{
-			ft_print_error("all args must be int", err_code);
-			return (*err_code);
-		}
+			return (ft_print_error("all args must be int", err_code));
+		if (my_args[i][0] == '-' && my_args[i][1] != '\0')
+			return (ft_print_error("all args must be positive", err_code));
+		ft_atoi_overflow(my_args[i], &overflow_err);
+		if (overflow_err == 1)
+			return (ft_print_error("Overflow", err_code));
 		i++;
 	}
 	return (*err_code);
